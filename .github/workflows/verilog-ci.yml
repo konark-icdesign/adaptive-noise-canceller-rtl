@@ -1,0 +1,23 @@
+name: Verilog CI
+
+on:
+  push:
+    branches: [ main, complete-lms-project ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lms-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Icarus Verilog
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+
+      - name: Run self-checking LMS simulation
+        run: make test
