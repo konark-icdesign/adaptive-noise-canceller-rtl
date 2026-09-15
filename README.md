@@ -1,12 +1,10 @@
 # Fixed-Point LMS Adaptive Filter RTL
 
-A 4-tap LMS adaptive filter implemented in Verilog using signed Q1.15 fixed-point arithmetic.
+4-tap LMS adaptive filter in Verilog using signed Q1.15 fixed-point arithmetic.
 
-This repository started as a simple fixed-coefficient FIR filter. I later extended it into an adaptive LMS design by adding an error path, coefficient updates, fixed-point saturation, and a self-checking convergence testbench.
+This started as a basic fixed-coefficient FIR and I later changed it into an actual LMS filter with coefficient updates, saturation and a convergence test.
 
 ## Design
-
-The filter uses the standard LMS equations:
 
 ```text
 y[n] = sum(w_i[n] * x[n-i])
@@ -14,36 +12,32 @@ e[n] = d[n] - y[n]
 w_i[n+1] = w_i[n] + mu * e[n] * x[n-i]
 ```
 
-In this implementation:
+Current implementation:
 
-- samples and coefficients are signed 16-bit Q1.15 values;
-- the filter has four taps;
-- the default learning rate is `mu = 1/16`;
-- multiplication and accumulation use wider intermediate values;
-- outputs and coefficient updates are saturated to the signed 16-bit range.
+- 16-bit signed Q1.15 samples and coefficients
+- 4 taps
+- default `mu = 1/16`
+- wider multiply/accumulate path
+- saturation back to 16-bit Q1.15
 
-The RTL is in [`rtl/lms_adaptive_filter.v`](rtl/lms_adaptive_filter.v).
+RTL: [`rtl/lms_adaptive_filter.v`](rtl/lms_adaptive_filter.v)
 
-More detail on the fixed-point scaling is in [`docs/fixed_point_and_algorithm.md`](docs/fixed_point_and_algorithm.md).
+Fixed-point notes: [`docs/fixed_point_and_algorithm.md`](docs/fixed_point_and_algorithm.md)
 
-## Verification
+## RTL verification
 
-The testbench creates a known two-tap system:
+The testbench builds a hidden 2-tap path:
 
 ```text
 h0 = +0.5
 h1 = -0.25
-```
 
-with
-
-```text
 d[n] = 0.5*x[n] - 0.25*x[n-1]
 ```
 
-The LMS coefficients begin at zero and adapt over 3000 pseudo-random input samples. The testbench checks that the mean-squared error drops significantly and that the learned coefficients move close to the expected values.
+The adaptive filter starts with all coefficients at zero and runs for 3000 pseudo-random samples.
 
-One local run produced:
+One run gives:
 
 ```text
 Early-window mean squared error : 1641547
@@ -54,17 +48,47 @@ Expected approximately          : 16384, -8192, 0, 0
 PASS: LMS adaptation and convergence verified.
 ```
 
-The measured late-window MSE is about 242 times lower than the early-window MSE.
-
-### Simulation result
+Late-window MSE is about 242x lower than the early window.
 
 ![Icarus Verilog LMS convergence test](docs/images/simulation_pass.png)
 
-### GTKWave
-
 ![GTKWave LMS adaptive filter simulation](docs/images/gtkwave_lms.png)
 
-## Repository structure
+## C reference model
+
+I added a small C model in `model/lms_reference.c` using the same fixed-point scaling, LFSR input sequence and hidden 2-tap path as the RTL test.
+
+It is useful as a second implementation of the algorithm, not another Verilog testbench.
+
+```bash
+make reference
+```
+
+Current C output matches the RTL run:
+
+```text
+C reference model
+early MSE : 1641547
+late MSE  : 6786
+coeffs    : 16179, -8414, -216, -192
+```
+
+Both checks run in GitHub Actions.
+
+## Run
+
+```bash
+make test
+make reference
+```
+
+Waveform:
+
+```bash
+make wave
+```
+
+## Structure
 
 ```text
 rtl/
@@ -73,11 +97,12 @@ rtl/
 tb/
   tb_lms_adaptive_filter.v
 
+model/
+  lms_reference.c
+
 docs/
   fixed_point_and_algorithm.md
   images/
-    simulation_pass.png
-    gtkwave_lms.png
 
 .github/workflows/
   verilog-ci.yml
@@ -85,35 +110,11 @@ docs/
 Makefile
 ```
 
-## Running the project
-
-Requirements:
-
-- Icarus Verilog
-- GNU Make
-- GTKWave (optional)
-
-Clone and run:
-
-```bash
-git clone https://github.com/konark-icdesign/adaptive-noise-canceller-rtl.git
-cd adaptive-noise-canceller-rtl
-make test
-```
-
-Open the waveform:
-
-```bash
-make wave
-```
-
-The same simulation is also run automatically through GitHub Actions.
-
 ## Scope
 
-This project is the digital adaptive-filter core and its RTL verification environment. It does not include microphone/ADC/DAC hardware or a complete real-time acoustic noise-cancellation system.
+This is the adaptive-filter RTL core and verification setup. It is not a complete acoustic ANC system with microphones, ADC/DAC and speakers.
 
-Possible later extensions are FPGA implementation, synthesis/area/timing measurements, and comparison against a software reference model.
+A useful later step would be synthesis/timing/resource measurements or FPGA testing, not just adding more taps for no reason.
 
 ## License
 
