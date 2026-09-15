@@ -2,7 +2,7 @@ name: Verilog CI
 
 on:
   push:
-    branches: [ main, complete-lms-project ]
+    branches: [ main, c-reference ]
   pull_request:
     branches: [ main ]
 
@@ -14,10 +14,13 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install Icarus Verilog
+      - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y iverilog
+          sudo apt-get install -y iverilog gcc
 
       - name: Run self-checking LMS simulation
         run: make test
+
+      - name: Run C reference model
+        run: make reference
