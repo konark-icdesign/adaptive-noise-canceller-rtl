@@ -5,8 +5,9 @@ SIM := $(BUILD_DIR)/lms_tb
 REF := $(BUILD_DIR)/lms_reference
 CC ?= gcc
 CFLAGS ?= -std=c11 -Wall -Wextra -O2
+PYTHON ?= python3
 
-.PHONY: all test sim wave reference clean
+.PHONY: all test sim wave reference experiment clean
 
 all: test
 
@@ -22,6 +23,9 @@ test: sim
 reference: $(BUILD_DIR)
 	$(CC) $(CFLAGS) model/lms_reference.c -o $(REF)
 	$(REF)
+
+experiment:
+	$(PYTHON) model/lms_mu_sweep.py --output-dir results
 
 wave: test
 	gtkwave $(BUILD_DIR)/lms.vcd
