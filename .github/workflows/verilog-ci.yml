@@ -24,3 +24,6 @@ jobs:
 
       - name: Run C reference model
         run: make reference
+
+      - name: Run LMS step-size experiment
+        run: make experiment
