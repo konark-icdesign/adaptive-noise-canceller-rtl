@@ -73,13 +73,37 @@ late MSE  : 6786
 coeffs    : 16179, -8414, -216, -192
 ```
 
-Both checks run in GitHub Actions.
+## Step-size experiment
+
+`model/lms_mu_sweep.py` runs the same deterministic fixed-point problem with four LMS step sizes: `1/8`, `1/16`, `1/32` and `1/64`.
+
+```bash
+make experiment
+```
+
+The run shows the expected convergence tradeoff. In this test, larger step sizes adapt faster during the fixed 3000-sample window, while smaller values are still approaching the hidden coefficients.
+
+| mu | early MSE | late MSE | MSE reduction | final coefficients |
+|---:|---:|---:|---:|---|
+| 1/8 | 256173 | 1557 | 22.16 dB | `[16281, -8297, -106, -96]` |
+| 1/16 | 1641547 | 6786 | 23.84 dB | `[16179, -8414, -216, -192]` |
+| 1/32 | 5678045 | 33616 | 22.28 dB | `[15946, -8684, -476, -408]` |
+| 1/64 | 12828515 | 148326 | 19.37 dB | `[15345, -9174, -932, -805]` |
+
+![LMS step-size sweep](results/mu_sweep.svg)
+
+Full results: [`results/mu_sweep.md`](results/mu_sweep.md)
+
+This is not a claim that one `mu` is universally best. LMS stability and convergence depend on the input power, correlation, filter length and fixed-point scaling.
+
+All three checks run in GitHub Actions: RTL simulation, C reference model and the Python step-size experiment.
 
 ## Run
 
 ```bash
 make test
 make reference
+make experiment
 ```
 
 Waveform:
@@ -99,6 +123,12 @@ tb/
 
 model/
   lms_reference.c
+  lms_mu_sweep.py
+
+results/
+  mu_sweep.csv
+  mu_sweep.md
+  mu_sweep.svg
 
 docs/
   fixed_point_and_algorithm.md
