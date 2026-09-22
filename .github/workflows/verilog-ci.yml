@@ -27,3 +27,9 @@ jobs:
 
       - name: Run LMS step-size experiment
         run: make experiment
+
+      - name: Run acoustic ANC and path-change simulation
+        run: make anc-experiment
+
+      - name: Run bit-exact acoustic-vector RTL parity
+        run: make rtl-parity

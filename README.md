@@ -96,7 +96,56 @@ Full results: [`results/mu_sweep.md`](results/mu_sweep.md)
 
 This is not a claim that one `mu` is universally best. LMS stability and convergence depend on the input power, correlation, filter length and fixed-point scaling.
 
-All three checks run in GitHub Actions: RTL simulation, C reference model and the Python step-size experiment.
+GitHub Actions runs the original RTL simulation, C reference, step-size experiment, acoustic ANC/path-change experiment and the 4,096-sample bit-exact RTL parity test.
+
+## Acoustic ANC and path-change experiment
+
+The original self-checking test proves system identification. I added a second deterministic experiment that is closer to adaptive noise cancellation:
+
+```text
+primary d[n] = clean signal + correlated noise after an unknown path
+reference x[n] = noise source before that path
+error e[n] = cleaned output
+```
+
+The hidden four-tap noise path changes at sample 10,000, so the filter has to adapt again instead of only converging once.
+
+For the current RTL default `mu = 1/16`:
+
+- input SNR is about 1.70 dB before the path change and 0.47 dB after it;
+- output SNR reaches 18.50 dB before and 18.21 dB after;
+- that is about 16.80 dB and 17.74 dB improvement;
+- the fixed-point model recovers to at least 15 dB output SNR in about 2800 samples after the path change;
+- no output, error or coefficient saturation occurs in the tested amplitude envelope.
+
+In this workload `mu = 1/32` gives better steady-state SNR, but takes longer to re-track the changed path. That result is deliberately kept separate from the earlier system-identification sweep; it is not a universal replacement for the RTL default.
+
+The simulation also includes an uncorrelated-reference negative control. As expected, it produces essentially no SNR improvement, which checks that the model is not reporting cancellation when the reference contains no useful noise information.
+
+Results: [`results/anc_system_sim.md`](results/anc_system_sim.md)
+
+Method and limits: [`docs/anc_verification.md`](docs/anc_verification.md)
+
+## Bit-exact acoustic-vector RTL parity
+
+A second self-checking test generates 4,096 Q1.15 acoustic-style samples and the exact expected output, error and coefficient trace from the Python fixed-point model. The real Verilog core must match all six values sample-by-sample:
+
+```text
+noise_estimate
+error_out
+coeff0
+coeff1
+coeff2
+coeff3
+```
+
+Run it with:
+
+```bash
+make rtl-parity
+```
+
+This catches arithmetic-shift, saturation and coefficient-update-order mismatches that can be missed by checking only final coefficients.
 
 ## Run
 
@@ -104,6 +153,8 @@ All three checks run in GitHub Actions: RTL simulation, C reference model and th
 make test
 make reference
 make experiment
+make anc-experiment
+make rtl-parity
 ```
 
 Waveform:
@@ -120,18 +171,26 @@ rtl/
 
 tb/
   tb_lms_adaptive_filter.v
+  tb_lms_vector_parity.v
 
 model/
   lms_reference.c
   lms_mu_sweep.py
+  anc_system_sim.py
+  generate_rtl_parity_vectors.py
 
 results/
   mu_sweep.csv
   mu_sweep.md
   mu_sweep.svg
+  anc_system_sim.csv
+  anc_system_sim.json
+  anc_system_sim.md
+  rtl_parity_manifest.json
 
 docs/
   fixed_point_and_algorithm.md
+  anc_verification.md
   images/
 
 .github/workflows/

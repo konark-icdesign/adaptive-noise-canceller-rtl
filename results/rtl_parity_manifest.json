@@ -1,0 +1,11 @@
+{
+  "scope": "4096-sample acoustic-style Q1.15 vector set for sample-by-sample RTL parity",
+  "samples": 4096,
+  "mu_shift": 4,
+  "mu": "1/16",
+  "final_coefficients_q15": [15869, -9868, 4183, -2421],
+  "saturations": {"output": 0, "error": 0, "weights": 0},
+  "input_peak_q15": 21299,
+  "path": [0.52, -0.28, 0.16, -0.07],
+  "contains_clean_signal_plus_correlated_noise": true
+}
