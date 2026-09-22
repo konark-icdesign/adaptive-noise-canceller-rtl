@@ -2,12 +2,13 @@ BUILD_DIR := build
 RTL := rtl/lms_adaptive_filter.v
 TB := tb/tb_lms_adaptive_filter.v
 SIM := $(BUILD_DIR)/lms_tb
+PARITY_SIM := $(BUILD_DIR)/lms_parity_tb
 REF := $(BUILD_DIR)/lms_reference
 CC ?= gcc
 CFLAGS ?= -std=c11 -Wall -Wextra -O2
 PYTHON ?= python3
 
-.PHONY: all test sim wave reference experiment clean
+.PHONY: all test sim wave reference experiment anc-experiment parity-vectors rtl-parity clean
 
 all: test
 
@@ -26,6 +27,16 @@ reference: $(BUILD_DIR)
 
 experiment:
 	$(PYTHON) model/lms_mu_sweep.py --output-dir results
+
+anc-experiment:
+	$(PYTHON) model/anc_system_sim.py --output-dir results
+
+parity-vectors: $(BUILD_DIR)
+	$(PYTHON) model/generate_rtl_parity_vectors.py --output-dir $(BUILD_DIR)/parity --manifest results/rtl_parity_manifest.json
+
+rtl-parity: parity-vectors
+	iverilog -g2012 -Wall -o $(PARITY_SIM) $(RTL) tb/tb_lms_vector_parity.v
+	vvp $(PARITY_SIM)
 
 wave: test
 	gtkwave $(BUILD_DIR)/lms.vcd

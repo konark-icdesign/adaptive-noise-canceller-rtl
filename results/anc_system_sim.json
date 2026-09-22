@@ -1,0 +1,30 @@
+{
+  "scope": "deterministic synthetic ANC/path-tracking simulation; no physical microphone, ADC, DAC or room measurement",
+  "sample_rate_hz": 8000,
+  "samples": 20000,
+  "path_change_sample": 10000,
+  "hidden_path_before": [0.52, -0.28, 0.16, -0.07],
+  "hidden_path_after": [0.18, 0.43, -0.22, 0.11],
+  "input_snr_pre_db": 1.6965397740729862,
+  "input_snr_post_db": 0.47202162023754735,
+  "best_mu": "1/32",
+  "fixed_float_error_rmse": 0.0013469719386782126,
+  "fixed_float_error_max_abs": 0.005351985750205346,
+  "cases": [
+    {"mu_shift": 3, "mu": "1/8", "pre_output_snr_db": 15.499501218346804, "post_output_snr_db": 14.691500776501838, "pre_improvement_db": 13.802961444273818, "post_improvement_db": 14.219479156264292, "recovery_to_15db_samples": 1700, "weights_q15": [4916, 13275, -7832, 3370], "weights_real": [0.1500244140625, 0.405120849609375, -0.239013671875, 0.10284423828125], "saturations": {"output": 0, "error": 0, "weights": 0}},
+    {"mu_shift": 4, "mu": "1/16", "pre_output_snr_db": 18.496710621258156, "post_output_snr_db": 18.20830855966744, "pre_improvement_db": 16.80017084718517, "post_improvement_db": 17.736286939429892, "recovery_to_15db_samples": 2800, "weights_q15": [5052, 13329, -7589, 3650], "weights_real": [0.1541748046875, 0.406768798828125, -0.231597900390625, 0.11138916015625], "saturations": {"output": 0, "error": 0, "weights": 0}},
+    {"mu_shift": 5, "mu": "1/32", "pre_output_snr_db": 20.034897666035896, "post_output_snr_db": 20.66969973083666, "pre_improvement_db": 18.33835789196291, "post_improvement_db": 20.19767811059911, "recovery_to_15db_samples": 4100, "weights_q15": [5486, 13293, -7186, 3392], "weights_real": [0.16741943359375, 0.405670166015625, -0.21929931640625, 0.103515625], "saturations": {"output": 0, "error": 0, "weights": 0}},
+    {"mu_shift": 6, "mu": "1/64", "pre_output_snr_db": 16.590565647469543, "post_output_snr_db": 14.510519751095535, "pre_improvement_db": 14.894025873396556, "post_improvement_db": 14.038498130857988, "recovery_to_15db_samples": null, "weights_q15": [6622, 11507, -5465, 2340], "weights_real": [0.20208740234375, 0.351165771484375, -0.166778564453125, 0.0714111328125], "saturations": {"output": 0, "error": 0, "weights": 0}},
+    {"mu_shift": 7, "mu": "1/128", "pre_output_snr_db": 11.10132184075044, "post_output_snr_db": 9.565917906182996, "pre_improvement_db": 9.404782066677454, "post_improvement_db": 9.093896285945448, "recovery_to_15db_samples": null, "weights_q15": [8247, 8073, -2938, 982], "weights_real": [0.251678466796875, 0.246368408203125, -0.08966064453125, 0.02996826171875], "saturations": {"output": 0, "error": 0, "weights": 0}}
+  ],
+  "uncorrelated_reference": {"mu_shift": 4, "mu": "1/16", "pre_output_snr_db": 1.580553983616758, "post_output_snr_db": 0.44078088369834173, "pre_improvement_db": -0.11598579045622825, "post_improvement_db": -0.031240736539205616, "recovery_to_15db_samples": null, "weights_q15": [-2310, -2080, -1286, -396], "weights_real": [-0.07049560546875, -0.0634765625, -0.03924560546875, -0.0120849609375], "saturations": {"output": 0, "error": 0, "weights": 0}},
+  "checks": {
+    "default_mu_improves_pre_snr_by_12db": true,
+    "default_mu_improves_post_snr_by_12db": true,
+    "default_mu_retracks_after_path_change": true,
+    "fixed_float_rmse_below_0p002_full_scale": true,
+    "no_fixed_point_saturation_in_test_envelope": true,
+    "uncorrelated_reference_does_not_fake_anc": true
+  },
+  "passed": true
+}
