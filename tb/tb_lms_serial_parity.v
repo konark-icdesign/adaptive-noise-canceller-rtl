@@ -1,4 +1,4 @@
-\`timescale 1ns/1ps
+`timescale 1ns/1ps
 
 module tb_lms_serial_parity;
     localparam integer N = 4096;
