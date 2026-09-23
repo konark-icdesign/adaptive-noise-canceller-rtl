@@ -143,9 +143,31 @@ Run it with:
 
 ```bash
 make rtl-parity
+make serial-parity
+make synthesis-report
 ```
 
 This catches arithmetic-shift, saturation and coefficient-update-order mismatches that can be missed by checking only final coefficients.
+
+## Hardware architecture comparison
+
+The repository now includes a second LMS implementation that deliberately reuses one signed 16x16 multiplier:
+
+- current `lms_adaptive_filter.v`: parallel arithmetic, one accepted sample per clock;
+- `lms_adaptive_filter_serial.v`: one shared multiplier, four FIR cycles plus four coefficient-update cycles, with a nine-clock initiation interval.
+
+The serialized core is not accepted just because it synthesizes smaller. It is replayed against the same 4,096-sample bit-exact acoustic vector set used for the parallel RTL, so its output, error and final adaptive state have to match the reference exactly.
+
+`scripts/run_synthesis.sh` runs generic Yosys synthesis for both architectures and generates:
+
+```text
+results/synthesis_compare.json
+results/synthesis_compare.md
+```
+
+The report compares logical multiplier/add/mux/register cells, generic post-synthesis cell count and arithmetic sample throughput. These are **generic Yosys numbers**, not FPGA LUT/DSP/Fmax measurements.
+
+Method and interpretation: [`docs/architecture_synthesis.md`](docs/architecture_synthesis.md)
 
 ## Run
 
@@ -168,16 +190,19 @@ make wave
 ```text
 rtl/
   lms_adaptive_filter.v
+  lms_adaptive_filter_serial.v
 
 tb/
   tb_lms_adaptive_filter.v
   tb_lms_vector_parity.v
+  tb_lms_serial_parity.v
 
 model/
   lms_reference.c
   lms_mu_sweep.py
   anc_system_sim.py
   generate_rtl_parity_vectors.py
+  synthesis_report.py
 
 results/
   mu_sweep.csv
@@ -187,10 +212,13 @@ results/
   anc_system_sim.json
   anc_system_sim.md
   rtl_parity_manifest.json
+  synthesis_compare.json
+  synthesis_compare.md
 
 docs/
   fixed_point_and_algorithm.md
   anc_verification.md
+  architecture_synthesis.md
   images/
 
 .github/workflows/
