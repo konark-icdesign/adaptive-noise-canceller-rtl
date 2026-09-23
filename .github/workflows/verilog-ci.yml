@@ -17,7 +17,7 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y iverilog gcc
+          sudo apt-get install -y iverilog gcc yosys
 
       - name: Run self-checking LMS simulation
         run: make test
@@ -33,3 +33,9 @@ jobs:
 
       - name: Run bit-exact acoustic-vector RTL parity
         run: make rtl-parity
+
+      - name: Run serialized one-multiplier RTL parity
+        run: make serial-parity
+
+      - name: Compare parallel and serialized synthesis
+        run: make synthesis-report
