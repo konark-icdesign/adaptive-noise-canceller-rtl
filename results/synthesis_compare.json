@@ -1,0 +1,33 @@
+{
+  "scope": "generic Yosys synthesis; no FPGA family mapping and no timing/Fmax claim",
+  "parallel": {
+    "logical_cells": 53,
+    "multipliers": 8,
+    "adders": 7,
+    "subtractors": 1,
+    "muxes": 16,
+    "register_cells": 9,
+    "generic_gate_cells": 16443,
+    "cycles_per_sample": 1,
+    "samples_per_second_at_50mhz": 50000000.0,
+    "samples_per_second_at_100mhz": 100000000.0
+  },
+  "serial": {
+    "logical_cells": 94,
+    "multipliers": 1,
+    "adders": 6,
+    "subtractors": 1,
+    "muxes": 32,
+    "register_cells": 15,
+    "generic_gate_cells": 3905,
+    "cycles_per_sample": 9,
+    "samples_per_second_at_50mhz": 5555555.555555556,
+    "samples_per_second_at_100mhz": 11111111.111111112
+  },
+  "checks": {
+    "serial_uses_fewer_logical_multipliers": true,
+    "parallel_accepts_one_sample_per_clock": true,
+    "serial_meets_48khz_at_50mhz_by_large_margin": true
+  },
+  "passed": true
+}
