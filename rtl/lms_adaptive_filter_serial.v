@@ -1,4 +1,4 @@
-\`timescale 1ns/1ps
+`timescale 1ns/1ps
 
 module lms_adaptive_filter_serial #(
     parameter integer MU_SHIFT = 4
