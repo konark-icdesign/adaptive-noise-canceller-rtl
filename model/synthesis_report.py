@@ -41,8 +41,6 @@ def summary(logical_path: Path, gate_path: Path, cycles_per_sample: int):
         "cycles_per_sample": cycles_per_sample,
         "samples_per_second_at_50mhz": 50_000_000 / cycles_per_sample,
         "samples_per_second_at_100mhz": 100_000_000 / cycles_per_sample,
-        "logical_cell_types": dict(sorted(logical.items())),
-        "generic_gate_cell_types": dict(sorted(gate.items())),
     }
 
 
@@ -90,7 +88,7 @@ def main():
         f"| initiation interval | {parallel['cycles_per_sample']} clock | {serial['cycles_per_sample']} clocks |",
         f"| theoretical sample rate at 50 MHz* | {parallel['samples_per_second_at_50mhz']:.0f}/s | {serial['samples_per_second_at_50mhz']:.0f}/s |",
         "",
-        "\*Arithmetic throughput only. This is not a timing-closure result.",
+        "*Arithmetic throughput only. This is not a timing-closure result.",
         "",
         "The serialized version intentionally trades throughput for multiplier reuse. Its separate",
         "4096-sample RTL parity test must pass before this comparison is accepted.",
