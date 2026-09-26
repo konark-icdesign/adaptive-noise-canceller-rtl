@@ -14,10 +14,11 @@ run_one() {
     --package CABGA256 \
     --speed 6 \
     --freq 50 \
+    --lpf-allow-unconstrained \
     --json build/ecp5/${name}.json \
     --textcfg build/ecp5/${name}.config \
     --report build/ecp5/${name}_pnr.json \
-    > build/ecp5/${name}_pnr.log 2>&1
+    2>&1 | tee build/ecp5/${name}_pnr.log
 }
 
 run_one parallel lms_adaptive_filter rtl/lms_adaptive_filter.v
