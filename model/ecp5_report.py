@@ -25,13 +25,13 @@ def summarize(name, build):
     text=(build/f"{name}_pnr.log").read_text(errors="replace")
     lut_match=re.search(r"Total LUT4s:\s*(\d+)", text)
     dff_match=re.search(r"Total DFFs:\s*(\d+)", text)
+    dsp_match=re.search(r"MULT18X18D:\s*(\d+)/", text)
+    bram_match=re.search(r"DP16KD:\s*(\d+)/", text)
     return {
       "lut4": int(lut_match.group(1)) if lut_match else None,
       "dff": int(dff_match.group(1)) if dff_match else None,
-      "MULT18X18D": c.get("MULT18X18D",0),
-      "ALU54B": c.get("ALU54B",0),
-      "DP16KD": c.get("DP16KD",0),
-      "DCCA": c.get("DCCA",0),
+      "MULT18X18D": int(dsp_match.group(1)) if dsp_match else 0,
+      "DP16KD": int(bram_match.group(1)) if bram_match else 0,
       "max_frequency_mhz": t["max_frequency_mhz"],
       "meets_50mhz": (t["max_frequency_mhz"] is not None and t["max_frequency_mhz"] >= 50.0),
     }
