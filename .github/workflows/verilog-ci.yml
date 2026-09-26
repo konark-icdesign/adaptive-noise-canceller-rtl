@@ -37,6 +37,9 @@ jobs:
       - name: Run serialized one-multiplier RTL parity
         run: make serial-parity
 
+      - name: Run staged-parallel RTL parity
+        run: make pipelined-parity
+
       - name: Compare parallel and serialized synthesis
         run: make synthesis-report
 

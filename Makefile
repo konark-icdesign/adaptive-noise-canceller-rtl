@@ -4,12 +4,13 @@ TB := tb/tb_lms_adaptive_filter.v
 SIM := $(BUILD_DIR)/lms_tb
 PARITY_SIM := $(BUILD_DIR)/lms_parity_tb
 SERIAL_PARITY_SIM := $(BUILD_DIR)/lms_serial_parity_tb
+PIPELINED_PARITY_SIM := $(BUILD_DIR)/lms_pipelined_parity_tb
 REF := $(BUILD_DIR)/lms_reference
 CC ?= gcc
 CFLAGS ?= -std=c11 -Wall -Wextra -O2
 PYTHON ?= python3
 
-.PHONY: all test sim wave reference experiment anc-experiment parity-vectors rtl-parity serial-parity synthesis-report ecp5-implementation clean
+.PHONY: all test sim wave reference experiment anc-experiment parity-vectors rtl-parity serial-parity pipelined-parity synthesis-report ecp5-implementation clean
 
 all: test
 
@@ -42,6 +43,10 @@ rtl-parity: parity-vectors
 serial-parity: parity-vectors
 	iverilog -g2012 -Wall -o $(SERIAL_PARITY_SIM) rtl/lms_adaptive_filter_serial.v tb/tb_lms_serial_parity.v
 	vvp $(SERIAL_PARITY_SIM)
+
+pipelined-parity: parity-vectors
+	iverilog -g2012 -Wall -o $(PIPELINED_PARITY_SIM) rtl/lms_adaptive_filter_pipelined.v tb/tb_lms_pipelined_parity.v
+	vvp $(PIPELINED_PARITY_SIM)
 
 synthesis-report:
 	bash scripts/run_synthesis.sh

@@ -23,6 +23,7 @@ run_one() {
 }
 
 run_one parallel lms_adaptive_filter rtl/lms_adaptive_filter.v
+run_one pipelined lms_adaptive_filter_pipelined rtl/lms_adaptive_filter_pipelined.v
 run_one serial lms_adaptive_filter_serial rtl/lms_adaptive_filter_serial.v
 
 python3 model/ecp5_report.py --build-dir build/ecp5 --output-dir results
