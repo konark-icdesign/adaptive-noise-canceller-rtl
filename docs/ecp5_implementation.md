@@ -21,29 +21,34 @@ Verilog
   -> resource + timing report
 ```
 
-Both cores must still pass their existing 4,096-sample bit-exact RTL tests in CI before implementation results are accepted.
+All architecture variants must pass their 4,096-sample bit-exact RTL tests in CI before implementation results are accepted.
 
 The 50 MHz throughput interpretation is:
 
-- parallel core: one accepted sample/clock = 50 MS/s arithmetic initiation rate;
-- serialized core: one accepted sample/9 clocks = 5.56 MS/s arithmetic initiation rate.
+- original parallel core: one accepted sample/clock;
+- staged parallel core: one accepted sample/5 clocks;
+- serialized core: one accepted sample/9 clocks.
 
 Those rates only matter if nextpnr reports timing closure at or above 50 MHz. They are not physical ADC/I2S throughput measurements.
 
 
 ## Routed result
 
-The first 50 MHz place-and-route attempt exposed a real limitation rather than being silently relaxed. The parallel core routed at **23.30 MHz**, with the long coefficient-update datapath as the limiting path. The serialized core routed at **34.59 MHz**.
+The first 50 MHz place-and-route attempt exposed a real limitation rather than being silently relaxed. The original parallel core routed at **23.30 MHz**, with the long coefficient-update datapath as the limiting path. The serialized core routed at **34.59 MHz**.
 
-Resource mapping:
+A staged-parallel version was then added specifically to shorten that path while preserving the numerical update order. It registers FIR products, balances the FIR sum, separates error generation, reuses four multipliers for the correlation stage and commits coefficients in a final stage.
 
-| resource | parallel | serialized |
-|---|---:|---:|
-| LUT4 | 509 | 643 |
-| DFF | 144 | 246 |
-| MULT18X18D | 8 | 1 |
-| DP16KD | 0 | 0 |
+Resource/timing mapping:
 
-The serialized architecture therefore cuts dedicated multiplier use by 87.5%, but increases control/mux/register logic. Its nine-clock initiation interval means the 34.59 MHz routed result corresponds to about 3.84 MS/s, still roughly 80 times a 48 kHz audio stream.
+| resource | original parallel | staged parallel | serialized |
+|---|---:|---:|---:|
+| LUT4 | 509 | 657 | 643 |
+| DFF | 144 | 419 | 246 |
+| MULT18X18D | 8 | 4 | 1 |
+| DP16KD | 0 | 0 | 0 |
+| initiation interval | 1 | 5 | 9 |
+| routed Fmax | 23.30 MHz | **61.94 MHz** | 34.59 MHz |
 
-No claim is made that either current core closes 50 MHz. Reaching that target would require further pipelining/retiming or architectural changes.
+The staged core passed the same 4,096-sample bit-exact test and is the first current architecture to close the 50 MHz reference constraint. Its routed arithmetic initiation capacity is about **12.39 MS/s**, around 258 times a 48 kHz audio stream.
+
+The result also shows the hardware tradeoff clearly: extra staging increases register/control cost, but cuts DSP usage from 8 to 4 and more than doubles routed Fmax compared with the original core.

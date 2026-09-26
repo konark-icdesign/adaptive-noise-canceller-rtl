@@ -143,6 +143,7 @@ Run it with:
 
 ```bash
 make rtl-parity
+make pipelined-parity
 make serial-parity
 make synthesis-report
 make ecp5-implementation
@@ -152,12 +153,13 @@ This catches arithmetic-shift, saturation and coefficient-update-order mismatche
 
 ## Hardware architecture comparison
 
-The repository now includes a second LMS implementation that deliberately reuses one signed 16x16 multiplier:
+The repository now keeps three versions of the same fixed-point LMS update:
 
-- current `lms_adaptive_filter.v`: parallel arithmetic, one accepted sample per clock;
-- `lms_adaptive_filter_serial.v`: one shared multiplier, four FIR cycles plus four coefficient-update cycles, with a nine-clock initiation interval.
+- `lms_adaptive_filter.v`: original one-cycle parallel arithmetic, 8 multipliers;
+- `lms_adaptive_filter_pipelined.v`: staged parallel arithmetic, four shared multipliers, five-clock initiation interval;
+- `lms_adaptive_filter_serial.v`: one shared multiplier, nine-clock initiation interval.
 
-The serialized core is not accepted just because it synthesizes smaller. It is replayed against the same 4,096-sample bit-exact acoustic vector set used for the parallel RTL, so its output, error and final adaptive state have to match the reference exactly.
+Both alternative cores are replayed against the same 4,096-sample bit-exact acoustic vector set used for the original RTL. The staged version therefore changes timing/resource structure without changing the sample-by-sample LMS result.
 
 `scripts/run_synthesis.sh` runs generic Yosys synthesis for both architectures and generates:
 
@@ -172,13 +174,19 @@ Method and interpretation: [`docs/architecture_synthesis.md`](docs/architecture_
 
 ## ECP5 reference implementation
 
-Both RTL architectures are also run through a device-specific Lattice ECP5 flow using Yosys `synth_ecp5` and nextpnr-ecp5 at a 50 MHz constraint. This gives FPGA-family-specific DSP/slice usage and a routed timing result instead of only generic Yosys cells.
+All three RTL architectures are run through a device-specific Lattice ECP5 flow using Yosys `synth_ecp5` and nextpnr-ecp5 at a 50 MHz constraint.
 
 Reference target: **LFE5U-25F / CABGA256 / speed grade 6**. This is a reproducible implementation target, not a physical-board claim or purchase recommendation.
 
-The routed study found that the current parallel architecture uses **8 ECP5 DSP blocks** and reaches **23.30 MHz**, while the serialized architecture uses **1 DSP block** and reaches **34.59 MHz**. Both miss the deliberately aggressive 50 MHz constraint, but the parallel and serialized arithmetic paths still provide about **485x** and **80x** the throughput required for 48 kHz audio respectively.
+The original core routes at **23.30 MHz** using 8 DSP blocks. The serialized core reaches **34.59 MHz** using 1 DSP block. The staged-parallel core closes the target at **61.94 MHz** using 4 DSP blocks.
 
-The serialized version saves 7 DSP blocks at the cost of more LUTs/registers: 509 LUT4 + 144 DFF for the parallel core versus 643 LUT4 + 246 DFF for the serialized core.
+| architecture | LUT4 | DFF | DSP | clocks/sample | routed Fmax |
+|---|---:|---:|---:|---:|---:|
+| original parallel | 509 | 144 | 8 | 1 | 23.30 MHz |
+| staged parallel | 657 | 419 | 4 | 5 | **61.94 MHz** |
+| serialized | 643 | 246 | 1 | 9 | 34.59 MHz |
+
+The staged architecture is bit-exact against the same 4,096-sample reference. Its extra registers/control raise LUT/DFF use, but splitting the long adaptive-update path both halves DSP usage and fixes the 50 MHz timing target.
 
 Generated results:
 
@@ -210,11 +218,13 @@ make wave
 ```text
 rtl/
   lms_adaptive_filter.v
+  lms_adaptive_filter_pipelined.v
   lms_adaptive_filter_serial.v
 
 tb/
   tb_lms_adaptive_filter.v
   tb_lms_vector_parity.v
+  tb_lms_pipelined_parity.v
   tb_lms_serial_parity.v
 
 model/
@@ -234,6 +244,8 @@ results/
   rtl_parity_manifest.json
   synthesis_compare.json
   synthesis_compare.md
+  ecp5_implementation.json
+  ecp5_implementation.md
 
 docs/
   fixed_point_and_algorithm.md
