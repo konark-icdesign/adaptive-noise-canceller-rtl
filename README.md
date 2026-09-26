@@ -176,6 +176,10 @@ Both RTL architectures are also run through a device-specific Lattice ECP5 flow 
 
 Reference target: **LFE5U-25F / CABGA256 / speed grade 6**. This is a reproducible implementation target, not a physical-board claim or purchase recommendation.
 
+The routed study found that the current parallel architecture uses **8 ECP5 DSP blocks** and reaches **23.30 MHz**, while the serialized architecture uses **1 DSP block** and reaches **34.59 MHz**. Both miss the deliberately aggressive 50 MHz constraint, but the parallel and serialized arithmetic paths still provide about **485x** and **80x** the throughput required for 48 kHz audio respectively.
+
+The serialized version saves 7 DSP blocks at the cost of more LUTs/registers: 509 LUT4 + 144 DFF for the parallel core versus 643 LUT4 + 246 DFF for the serialized core.
+
 Generated results:
 
 ```text
