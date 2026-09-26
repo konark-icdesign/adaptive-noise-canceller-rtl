@@ -9,7 +9,7 @@ CC ?= gcc
 CFLAGS ?= -std=c11 -Wall -Wextra -O2
 PYTHON ?= python3
 
-.PHONY: all test sim wave reference experiment anc-experiment parity-vectors rtl-parity serial-parity synthesis-report clean
+.PHONY: all test sim wave reference experiment anc-experiment parity-vectors rtl-parity serial-parity synthesis-report ecp5-implementation clean
 
 all: test
 
@@ -45,6 +45,9 @@ serial-parity: parity-vectors
 
 synthesis-report:
 	bash scripts/run_synthesis.sh
+
+ecp5-implementation:
+	bash scripts/run_ecp5.sh
 
 wave: test
 	gtkwave $(BUILD_DIR)/lms.vcd

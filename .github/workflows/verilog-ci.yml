@@ -17,7 +17,7 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y iverilog gcc yosys
+          sudo apt-get install -y iverilog gcc yosys nextpnr-ecp5
 
       - name: Run self-checking LMS simulation
         run: make test
@@ -39,3 +39,6 @@ jobs:
 
       - name: Compare parallel and serialized synthesis
         run: make synthesis-report
+
+      - name: ECP5 synthesis, place and route
+        run: make ecp5-implementation

@@ -1,0 +1,33 @@
+{
+  "scope": "Lattice ECP5-25F reference-target synth_ecp5 + nextpnr-ecp5 place-and-route; not a physical-board measurement",
+  "target": "LFE5U-25F, CABGA256, speed grade 6",
+  "constraint_mhz": 50.0,
+  "parallel": {
+    "lut4": 509,
+    "dff": 144,
+    "MULT18X18D": 8,
+    "DP16KD": 0,
+    "max_frequency_mhz": 23.3,
+    "meets_50mhz": false,
+    "cycles_per_sample": 1,
+    "routed_sample_capacity_sps": 23300000.0,
+    "margin_over_48khz": 485.42
+  },
+  "serial": {
+    "lut4": 643,
+    "dff": 246,
+    "MULT18X18D": 1,
+    "DP16KD": 0,
+    "max_frequency_mhz": 34.59,
+    "meets_50mhz": false,
+    "cycles_per_sample": 9,
+    "routed_sample_capacity_sps": 3843333.33,
+    "margin_over_48khz": 80.07
+  },
+  "checks": {
+    "parallel_supports_48khz": true,
+    "serial_supports_48khz": true,
+    "serial_uses_fewer_dsp_multipliers": true
+  },
+  "passed": true
+}

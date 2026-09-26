@@ -145,6 +145,7 @@ Run it with:
 make rtl-parity
 make serial-parity
 make synthesis-report
+make ecp5-implementation
 ```
 
 This catches arithmetic-shift, saturation and coefficient-update-order mismatches that can be missed by checking only final coefficients.
@@ -168,6 +169,25 @@ results/synthesis_compare.md
 The report compares logical multiplier/add/mux/register cells, generic post-synthesis cell count and arithmetic sample throughput. These are **generic Yosys numbers**, not FPGA LUT/DSP/Fmax measurements.
 
 Method and interpretation: [`docs/architecture_synthesis.md`](docs/architecture_synthesis.md)
+
+## ECP5 reference implementation
+
+Both RTL architectures are also run through a device-specific Lattice ECP5 flow using Yosys `synth_ecp5` and nextpnr-ecp5 at a 50 MHz constraint. This gives FPGA-family-specific DSP/slice usage and a routed timing result instead of only generic Yosys cells.
+
+Reference target: **LFE5U-25F / CABGA256 / speed grade 6**. This is a reproducible implementation target, not a physical-board claim or purchase recommendation.
+
+The routed study found that the current parallel architecture uses **8 ECP5 DSP blocks** and reaches **23.30 MHz**, while the serialized architecture uses **1 DSP block** and reaches **34.59 MHz**. Both miss the deliberately aggressive 50 MHz constraint, but the parallel and serialized arithmetic paths still provide about **485x** and **80x** the throughput required for 48 kHz audio respectively.
+
+The serialized version saves 7 DSP blocks at the cost of more LUTs/registers: 509 LUT4 + 144 DFF for the parallel core versus 643 LUT4 + 246 DFF for the serialized core.
+
+Generated results:
+
+```text
+results/ecp5_implementation.json
+results/ecp5_implementation.md
+```
+
+Method: [`docs/ecp5_implementation.md`](docs/ecp5_implementation.md)
 
 ## Run
 
