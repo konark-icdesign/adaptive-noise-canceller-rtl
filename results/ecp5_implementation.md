@@ -1,42 +1,59 @@
 # ECP5 implementation study
 
-Reference implementation target only: **LFE5U-25F, CABGA256, speed grade 6**. This is synthesis/place-and-route evidence from Yosys + nextpnr, not physical FPGA-board validation.
+Reference implementation target: **LFE5U-25F, CABGA256, speed grade 6** using Yosys `synth_ecp5` and nextpnr-ecp5.
 
-| metric | parallel LMS | serialized LMS |
-|---|---:|---:|
-| LUT4s before packing | 509 | 643 |
-| DFFs before packing | 144 | 246 |
-| ECP5 MULT18X18D DSP blocks | **8** | **1** |
-| DP16KD BRAMs | 0 | 0 |
-| initiation interval | 1 clock/sample | 9 clocks/sample |
-| routed max frequency | **23.30 MHz** | **34.59 MHz** |
-| closes 50 MHz target | no | no |
-| routed arithmetic sample capacity | 23.30 MS/s | 3.84 MS/s |
-| margin over 48 kHz audio | ~485x | ~80x |
+This is routed implementation evidence, not physical-board validation.
 
-## What changed compared with generic synthesis
-
-Generic Yosys synthesis showed the serialized architecture using much less multiplier logic. The ECP5 flow makes the hardware tradeoff clearer: the parallel core maps eight multiplies into eight dedicated `MULT18X18D` DSP blocks, while the serialized core reuses one DSP block.
-
-The serialized core therefore saves **7 DSP blocks (87.5%)**, but costs more LUTs and registers for muxing/state/control:
-
-- LUT4 count rises from 509 to 643;
-- DFF count rises from 144 to 246;
-- DSP usage falls from 8 to 1.
+| metric | original parallel | staged parallel | serialized |
+|---|---:|---:|---:|
+| LUT4s before packing | 509 | 657 | 643 |
+| DFFs before packing | 144 | 419 | 246 |
+| ECP5 MULT18X18D DSP blocks | 8 | 4 | 1 |
+| DP16KD BRAMs | 0 | 0 | 0 |
+| initiation interval | 1 clock | 5 clocks | 9 clocks |
+| routed Fmax | **23.30 MHz** | **61.94 MHz** | **34.59 MHz** |
+| closes 50 MHz target | no | **yes** | no |
+| arithmetic sample capacity at routed Fmax | 23.30 MS/s | 12.39 MS/s | 3.84 MS/s |
+| margin over 48 kHz audio | ~485x | ~258x | ~80x |
 
 ## Timing result
 
-The deliberately aggressive 50 MHz constraint did **not** close for either current implementation.
+The original one-cycle parallel implementation failed the 50 MHz reference target because FIR, error and coefficient-update arithmetic sat in the same clock interval.
 
-- parallel routed Fmax: **23.30 MHz**;
-- serialized routed Fmax: **34.59 MHz**.
-
-That failure is kept in the report rather than hidden. For the actual 48 kHz audio use case, however, both designs have large arithmetic-throughput margin. The parallel core can accept one sample every clock. The serialized core accepts one every nine clocks, so its routed arithmetic capacity is approximately:
+The staged design separates the work across five states:
 
 ```text
-34.59 MHz / 9 = 3.84 MS/s
+capture/FIR multiply
+        ->
+balanced FIR sum
+        ->
+Q1.15 output + error
+        ->
+correlation multiply
+        ->
+coefficient commit
 ```
 
-which is still about 80 times 48 kHz.
+The four multipliers are reused between FIR and correlation phases. That changes the architecture from 8 DSP blocks to 4 DSP blocks while also shortening the longest combinational path enough to route at **61.94 MHz**.
 
-These numbers are specific to this reference target, unconstrained I/O placement, current RTL structure and tool versions. They are not portable Fmax/resource guarantees for another FPGA or a physical board.
+The 4,096-sample bit-exact test passed, so the staging did not alter the fixed-point LMS result or coefficient-update order.
+
+## Tradeoff
+
+The timing improvement is not free:
+
+- LUT4: 509 -> 657;
+- DFF: 144 -> 419;
+- DSP: 8 -> 4;
+- initiation interval: 1 -> 5 clocks;
+- routed Fmax: 23.30 -> 61.94 MHz.
+
+For 48 kHz audio, the five-clock initiation interval is still insignificant. At routed Fmax:
+
+```text
+61.94 MHz / 5 = 12.388 MS/s
+```
+
+which is about 258 times the 48 kHz requirement.
+
+The serialized architecture remains the minimum-DSP option at one DSP block, while the staged-parallel architecture is the only current version that closes the 50 MHz reference target.
