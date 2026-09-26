@@ -22,8 +22,12 @@ def parse_log(path):
 def summarize(name, build):
     c=yosys_counts(build/f"{name}.json")
     t=parse_log(build/f"{name}_pnr.log")
+    text=(build/f"{name}_pnr.log").read_text(errors="replace")
+    lut_match=re.search(r"Total LUT4s:\s*(\d+)", text)
+    dff_match=re.search(r"Total DFFs:\s*(\d+)", text)
     return {
-      "TRELLIS_SLICE": c.get("TRELLIS_SLICE",0),
+      "lut4": int(lut_match.group(1)) if lut_match else None,
+      "dff": int(dff_match.group(1)) if dff_match else None,
       "MULT18X18D": c.get("MULT18X18D",0),
       "ALU54B": c.get("ALU54B",0),
       "DP16KD": c.get("DP16KD",0),
@@ -49,8 +53,8 @@ def main():
       "parallel":p,
       "serial":s,
       "checks":{
-        "parallel_meets_50mhz":p["meets_50mhz"],
-        "serial_meets_50mhz":s["meets_50mhz"],
+        "parallel_supports_48khz":p["max_frequency_mhz"] is not None and p["max_frequency_mhz"]*1_000_000 >= 48_000,
+        "serial_supports_48khz":s["max_frequency_mhz"] is not None and s["max_frequency_mhz"]*1_000_000/9 >= 48_000,
         "serial_uses_fewer_dsp_multipliers":s["MULT18X18D"] < p["MULT18X18D"],
       }
     }
@@ -60,12 +64,13 @@ def main():
       "# ECP5 implementation study","",
       "Reference implementation target only: LFE5U-25F, CABGA256, speed grade 6. This is synthesis/place-and-route evidence, not physical FPGA-board validation.","",
       "| metric | parallel LMS | serialized LMS |","|---|---:|---:|",
-      f"| ECP5 slices | {p['TRELLIS_SLICE']} | {s['TRELLIS_SLICE']} |",
+      f"| LUT4s before packing | {p['lut4']} | {s['lut4']} |",
+      f"| DFFs before packing | {p['dff']} | {s['dff']} |",
       f"| MULT18X18D DSP blocks | {p['MULT18X18D']} | {s['MULT18X18D']} |",
       f"| DP16KD BRAMs | {p['DP16KD']} | {s['DP16KD']} |",
       f"| reported max frequency | {p['max_frequency_mhz']} MHz | {s['max_frequency_mhz']} MHz |",
       f"| meets 50 MHz constraint | {p['meets_50mhz']} | {s['meets_50mhz']} |","",
-      "The parallel core accepts one sample per clock; the serialized core accepts one every nine clocks. At 50 MHz that corresponds to arithmetic input capacities of 50 MS/s and 5.56 MS/s respectively, both well above 48 kHz audio if timing closes.","",
+      f"Using routed Fmax, estimated arithmetic initiation capacity is {p['max_frequency_mhz']*1e6:.0f} samples/s for parallel and {s['max_frequency_mhz']*1e6/9:.0f} samples/s for serialized. Both are compared with 48 kHz audio.","",
       "These figures depend on the reference FPGA family, synthesis mapping and unconstrained I/O placement. They are not portable resource/Fmax claims for a different FPGA."
     ]
     (out/"ecp5_implementation.md").write_text("\n".join(lines)+"\n")
