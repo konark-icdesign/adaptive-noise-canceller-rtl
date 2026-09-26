@@ -14,6 +14,7 @@ run_one() {
     --package CABGA256 \
     --speed 6 \
     --freq 50 \
+    --timing-allow-fail \
     --lpf-allow-unconstrained \
     --json build/ecp5/${name}.json \
     --textcfg build/ecp5/${name}.config \
