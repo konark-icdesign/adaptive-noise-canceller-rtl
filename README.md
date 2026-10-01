@@ -196,7 +196,7 @@ The staged architecture is bit-exact against the same 4,096-sample reference. It
 
 A buffered [streaming wrapper](docs/streaming_wrapper.md) now adds source and sink valid/ready handshakes without changing the LMS arithmetic. Its 4,096-sample stress run exercised 14,545 input-backpressure cycles and 5,358 output-backpressure cycles with zero output-overflow events while remaining bit-exact. A separate 50 MHz simulation drove 256 samples at an average 48 kHz cadence with zero source backpressure. The buffered ECP5 top retained four DSPs and closed at 65.02 MHz; its higher LUT/DFF count includes FIFOs and diagnostic counters.
 
-An [I2S ingress bridge](docs/i2s_ingress.md) now accepts classic 16-bit stereo framing, maps left=reference and right=desired, and crosses complete sample pairs from the 1.536 MHz BCLK domain into the 50 MHz LMS domain with a request/acknowledge bundled-data handshake. Its nominal 48 kHz test uses the existing bit-exact acoustic vectors; a separate blocked-consumer test verifies that an unavoidable I2S frame loss is counted explicitly rather than hidden.
+An [I2S ingress bridge](docs/i2s_ingress.md) now accepts classic 16-bit stereo framing, maps left=reference and right=desired, and crosses complete sample pairs from the 1.536 MHz BCLK domain into the 50 MHz LMS domain with a request/acknowledge bundled-data handshake. The nominal test decoded 256/256 frames and remained bit-exact with zero overrun or framing errors; a separate blocked-consumer test retained the first pending frame and counted the dropped second frame explicitly. [Verification record](results/i2s_ingress_verification.md).
 
 Generated results:
 

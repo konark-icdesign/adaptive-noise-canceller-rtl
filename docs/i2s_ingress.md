@@ -66,3 +66,26 @@ explicit overrun counter.
 
 The bridge is also passed through generic Yosys synthesis as a synthesizability
 check. No I2S timing closure or physical codec/board measurement is claimed.
+
+
+## Verified simulation result
+
+The first CI run of the complete ingress path passed:
+
+- 256 standard-I2S stereo frames decoded;
+- 256 sample pairs accepted by the LMS stream;
+- 256 LMS results emitted;
+- zero I2S overruns at nominal 48 kHz;
+- zero I2S framing errors;
+- zero LMS input-stall cycles at nominal cadence;
+- zero LMS output-overflow events;
+- all noise-estimate, error and coefficient outputs bit-exact with the existing
+  fixed-point reference.
+
+The blocked-consumer receiver test also passed: with `frame_ready=0`, the first
+complete stereo frame remained stable and the next completed frame incremented
+`overrun_count` by exactly one.
+
+Generic Yosys synthesis/check of the complete I2S ingress + CDC + buffered LMS
+top also completed successfully. This confirms synthesizability only; it is not
+a two-clock timing-closure result.
