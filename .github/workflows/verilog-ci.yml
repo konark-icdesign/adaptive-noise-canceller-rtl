@@ -40,6 +40,12 @@ jobs:
       - name: Run staged-parallel RTL parity
         run: make pipelined-parity
 
+      - name: Run buffered stream parity under backpressure
+        run: make stream-parity
+
+      - name: Run 48 kHz stream cadence test
+        run: make stream-48k
+
       - name: Compare parallel and serialized synthesis
         run: make synthesis-report
 

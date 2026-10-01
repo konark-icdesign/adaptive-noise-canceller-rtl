@@ -19,7 +19,7 @@ def parse_log(path):
         mhz=float(matches[-1])
     return {"max_frequency_mhz":mhz}
 
-def summarize(name, build):
+def summarize(name, build, cycles_per_sample):
     c=yosys_counts(build/f"{name}.json")
     t=parse_log(build/f"{name}_pnr.log")
     text=(build/f"{name}_pnr.log").read_text(errors="replace")
@@ -34,6 +34,11 @@ def summarize(name, build):
       "DP16KD": int(bram_match.group(1)) if bram_match else 0,
       "max_frequency_mhz": t["max_frequency_mhz"],
       "meets_50mhz": (t["max_frequency_mhz"] is not None and t["max_frequency_mhz"] >= 50.0),
+      "cycles_per_sample": cycles_per_sample,
+      "routed_sample_capacity_sps": (
+          None if t["max_frequency_mhz"] is None
+          else t["max_frequency_mhz"] * 1_000_000 / cycles_per_sample
+      ),
     }
 
 def main():
@@ -44,15 +49,17 @@ def main():
     build=Path(a.build_dir)
     out=Path(a.output_dir)
     out.mkdir(parents=True,exist_ok=True)
-    p=summarize("parallel",build)
-    q=summarize("pipelined",build)
-    s=summarize("serial",build)
+    p=summarize("parallel",build,1)
+    q=summarize("pipelined",build,5)
+    w=summarize("stream",build,5)
+    s=summarize("serial",build,9)
     result={
       "scope":"Lattice ECP5-25F reference-target synth_ecp5 + nextpnr-ecp5 place-and-route; not a physical-board measurement",
       "target":"LFE5U-25F, CABGA256, speed grade 6",
       "constraint_mhz":50.0,
       "parallel":p,
       "pipelined":q,
+      "stream_wrapper":w,
       "serial":s,
       "checks":{
         "parallel_supports_48khz":p["max_frequency_mhz"] is not None and p["max_frequency_mhz"]*1_000_000 >= 48_000,
@@ -60,6 +67,8 @@ def main():
         "serial_supports_48khz":s["max_frequency_mhz"] is not None and s["max_frequency_mhz"]*1_000_000/9 >= 48_000,
         "pipelined_improves_fmax":q["max_frequency_mhz"] is not None and p["max_frequency_mhz"] is not None and q["max_frequency_mhz"] > p["max_frequency_mhz"],
         "pipelined_uses_fewer_dsp_multipliers":q["MULT18X18D"] < p["MULT18X18D"],
+        "stream_wrapper_supports_48khz":w["max_frequency_mhz"] is not None and w["max_frequency_mhz"]*1_000_000/5 >= 48_000,
+        "stream_wrapper_preserves_four_dsp_core":w["MULT18X18D"] == q["MULT18X18D"],
         "serial_uses_fewer_dsp_multipliers":s["MULT18X18D"] < p["MULT18X18D"],
       }
     }
@@ -68,15 +77,15 @@ def main():
     lines=[
       "# ECP5 implementation study","",
       "Reference implementation target only: LFE5U-25F, CABGA256, speed grade 6. This is synthesis/place-and-route evidence, not physical FPGA-board validation.","",
-      "| metric | original parallel | staged parallel | serialized |","|---|---:|---:|---:|",
-      f"| LUT4s before packing | {p['lut4']} | {q['lut4']} | {s['lut4']} |",
-      f"| DFFs before packing | {p['dff']} | {q['dff']} | {s['dff']} |",
-      f"| MULT18X18D DSP blocks | {p['MULT18X18D']} | {q['MULT18X18D']} | {s['MULT18X18D']} |",
-      f"| DP16KD BRAMs | {p['DP16KD']} | {q['DP16KD']} | {s['DP16KD']} |",
-      f"| initiation interval | 1 | 5 | 9 |",
-      f"| reported max frequency | {p['max_frequency_mhz']} MHz | {q['max_frequency_mhz']} MHz | {s['max_frequency_mhz']} MHz |",
-      f"| meets 50 MHz constraint | {p['meets_50mhz']} | {q['meets_50mhz']} | {s['meets_50mhz']} |","",
-      f"Using routed Fmax, estimated arithmetic initiation capacity is {p['max_frequency_mhz']*1e6:.0f} samples/s original, {q['max_frequency_mhz']*1e6/5:.0f} samples/s staged-parallel, and {s['max_frequency_mhz']*1e6/9:.0f} samples/s serialized. All are compared with 48 kHz audio.","",
+      "| metric | original parallel | staged parallel | stream wrapper | serialized |","|---|---:|---:|---:|---:|",
+      f"| LUT4s before packing | {p['lut4']} | {q['lut4']} | {w['lut4']} | {s['lut4']} |",
+      f"| DFFs before packing | {p['dff']} | {q['dff']} | {w['dff']} | {s['dff']} |",
+      f"| MULT18X18D DSP blocks | {p['MULT18X18D']} | {q['MULT18X18D']} | {w['MULT18X18D']} | {s['MULT18X18D']} |",
+      f"| DP16KD BRAMs | {p['DP16KD']} | {q['DP16KD']} | {w['DP16KD']} | {s['DP16KD']} |",
+      f"| sustained core initiation interval | 1 | 5 | 5 | 9 |",
+      f"| reported max frequency | {p['max_frequency_mhz']} MHz | {q['max_frequency_mhz']} MHz | {w['max_frequency_mhz']} MHz | {s['max_frequency_mhz']} MHz |",
+      f"| meets 50 MHz constraint | {p['meets_50mhz']} | {q['meets_50mhz']} | {w['meets_50mhz']} | {s['meets_50mhz']} |","",
+      f"Using routed Fmax, estimated arithmetic initiation capacity is {p['max_frequency_mhz']*1e6:.0f} samples/s original, {q['max_frequency_mhz']*1e6/5:.0f} samples/s staged-parallel, {w['max_frequency_mhz']*1e6/5:.0f} samples/s through the buffered wrapper, and {s['max_frequency_mhz']*1e6/9:.0f} samples/s serialized. All are compared with 48 kHz audio.","",
       "These figures depend on the reference FPGA family, synthesis mapping and unconstrained I/O placement. They are not portable resource/Fmax claims for a different FPGA."
     ]
     (out/"ecp5_implementation.md").write_text("\n".join(lines)+"\n")
