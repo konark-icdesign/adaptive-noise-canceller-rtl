@@ -72,3 +72,30 @@ pin per bit. The corrected ECP5 reference top keeps the counters internal and
 XOR-reduces each 32-bit counter to one debug-status bit. Every counter bit still
 feeds observable logic for the implementation study, while the package I/O
 model stays physically plausible enough to reach placement and timing.
+
+
+## Verified result
+
+The corrected CI run produced:
+
+- 4,096/4,096 inputs accepted and 4,096/4,096 outputs emitted;
+- 14,545 input-backpressure cycles in the burst/stall stress test;
+- 5,358 output-backpressure cycles;
+- zero output-overflow events;
+- all output, error and four coefficient values bit-exact;
+- 256 samples at the 48 kHz / 50 MHz cadence with zero source backpressure.
+
+ECP5 reference implementation of the buffered top:
+
+| metric | staged core | buffered stream top |
+|---|---:|---:|
+| LUT4 | 657 | 1193 |
+| DFF | 419 | 593 |
+| DSP | 4 | 4 |
+| routed Fmax | 61.94 MHz | 65.02 MHz |
+| sustained clocks/sample | 5 | 5 |
+
+The wrapper therefore costs 536 LUT4s and 174 DFFs in this reference build while
+preserving the four-DSP arithmetic core and 50 MHz timing closure. The small
+Fmax increase is a placement/routing difference between implementation tops,
+not evidence that adding buffering accelerates the LMS arithmetic.

@@ -19,7 +19,7 @@ def parse_log(path):
         mhz=float(matches[-1])
     return {"max_frequency_mhz":mhz}
 
-def summarize(name, build):
+def summarize(name, build, cycles_per_sample):
     c=yosys_counts(build/f"{name}.json")
     t=parse_log(build/f"{name}_pnr.log")
     text=(build/f"{name}_pnr.log").read_text(errors="replace")
@@ -34,6 +34,11 @@ def summarize(name, build):
       "DP16KD": int(bram_match.group(1)) if bram_match else 0,
       "max_frequency_mhz": t["max_frequency_mhz"],
       "meets_50mhz": (t["max_frequency_mhz"] is not None and t["max_frequency_mhz"] >= 50.0),
+      "cycles_per_sample": cycles_per_sample,
+      "routed_sample_capacity_sps": (
+          None if t["max_frequency_mhz"] is None
+          else t["max_frequency_mhz"] * 1_000_000 / cycles_per_sample
+      ),
     }
 
 def main():
@@ -44,10 +49,10 @@ def main():
     build=Path(a.build_dir)
     out=Path(a.output_dir)
     out.mkdir(parents=True,exist_ok=True)
-    p=summarize("parallel",build)
-    q=summarize("pipelined",build)
-    w=summarize("stream",build)
-    s=summarize("serial",build)
+    p=summarize("parallel",build,1)
+    q=summarize("pipelined",build,5)
+    w=summarize("stream",build,5)
+    s=summarize("serial",build,9)
     result={
       "scope":"Lattice ECP5-25F reference-target synth_ecp5 + nextpnr-ecp5 place-and-route; not a physical-board measurement",
       "target":"LFE5U-25F, CABGA256, speed grade 6",
