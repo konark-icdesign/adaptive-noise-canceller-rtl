@@ -146,6 +146,8 @@ make rtl-parity
 make pipelined-parity
 make stream-parity
 make stream-48k
+make i2s-ingress
+make i2s-overrun
 make serial-parity
 make synthesis-report
 make ecp5-implementation
@@ -194,6 +196,8 @@ The staged architecture is bit-exact against the same 4,096-sample reference. It
 
 A buffered [streaming wrapper](docs/streaming_wrapper.md) now adds source and sink valid/ready handshakes without changing the LMS arithmetic. Its 4,096-sample stress run exercised 14,545 input-backpressure cycles and 5,358 output-backpressure cycles with zero output-overflow events while remaining bit-exact. A separate 50 MHz simulation drove 256 samples at an average 48 kHz cadence with zero source backpressure. The buffered ECP5 top retained four DSPs and closed at 65.02 MHz; its higher LUT/DFF count includes FIFOs and diagnostic counters.
 
+An [I2S ingress bridge](docs/i2s_ingress.md) now accepts classic 16-bit stereo framing, maps left=reference and right=desired, and crosses complete sample pairs from the 1.536 MHz BCLK domain into the 50 MHz LMS domain with a request/acknowledge bundled-data handshake. Its nominal 48 kHz test uses the existing bit-exact acoustic vectors; a separate blocked-consumer test verifies that an unavoidable I2S frame loss is counted explicitly rather than hidden.
+
 Generated results:
 
 ```text
@@ -226,6 +230,9 @@ rtl/
   lms_adaptive_filter.v
   lms_adaptive_filter_pipelined.v
   lms_stream_wrapper.v
+  i2s_stereo_rx16.v
+  audio_pair_cdc.v
+  lms_i2s_input_bridge.v
   lms_adaptive_filter_serial.v
 
 tb/
@@ -234,6 +241,8 @@ tb/
   tb_lms_pipelined_parity.v
   tb_lms_stream_wrapper.v
   tb_lms_stream_48k.v
+  tb_lms_i2s_input_bridge.v
+  tb_i2s_rx16_overrun.v
   tb_lms_serial_parity.v
 
 model/

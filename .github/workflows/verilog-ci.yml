@@ -46,6 +46,15 @@ jobs:
       - name: Run 48 kHz stream cadence test
         run: make stream-48k
 
+      - name: Run 16-bit stereo I2S ingress parity
+        run: make i2s-ingress
+
+      - name: Run I2S blocked-consumer overrun test
+        run: make i2s-overrun
+
+      - name: Check I2S ingress synthesizability
+        run: make i2s-synth-check
+
       - name: Compare parallel and serialized synthesis
         run: make synthesis-report
 
