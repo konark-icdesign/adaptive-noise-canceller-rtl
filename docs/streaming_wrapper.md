@@ -57,3 +57,18 @@ existing 4,096-sample parity tests.
 - requires zero source backpressure at that cadence.
 
 These are RTL simulations, not an ADC/I2S or physical FPGA measurement.
+
+
+## First ECP5 implementation failure
+
+The first wrapper implementation attempt did not reach placement/timing because
+the synthesis top exposed all five 32-bit diagnostic counters as package pins.
+Together with stream data and coefficient outputs, nextpnr saw 294 TRELLIS_IO
+cells on a CABGA256 target with 197 available I/O cells and rejected placement.
+
+That is an integration-model error rather than a reason to delete the counters:
+real hardware would read counters through a register/debug interface, not one
+pin per bit. The corrected ECP5 reference top keeps the counters internal and
+XOR-reduces each 32-bit counter to one debug-status bit. Every counter bit still
+feeds observable logic for the implementation study, while the package I/O
+model stays physically plausible enough to reach placement and timing.
