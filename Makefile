@@ -5,12 +5,14 @@ SIM := $(BUILD_DIR)/lms_tb
 PARITY_SIM := $(BUILD_DIR)/lms_parity_tb
 SERIAL_PARITY_SIM := $(BUILD_DIR)/lms_serial_parity_tb
 PIPELINED_PARITY_SIM := $(BUILD_DIR)/lms_pipelined_parity_tb
+STREAM_PARITY_SIM := $(BUILD_DIR)/lms_stream_parity_tb
+STREAM_48K_SIM := $(BUILD_DIR)/lms_stream_48k_tb
 REF := $(BUILD_DIR)/lms_reference
 CC ?= gcc
 CFLAGS ?= -std=c11 -Wall -Wextra -O2
 PYTHON ?= python3
 
-.PHONY: all test sim wave reference experiment anc-experiment parity-vectors rtl-parity serial-parity pipelined-parity synthesis-report ecp5-implementation clean
+.PHONY: all test sim wave reference experiment anc-experiment parity-vectors rtl-parity serial-parity pipelined-parity stream-parity stream-48k synthesis-report ecp5-implementation clean
 
 all: test
 
@@ -47,6 +49,14 @@ serial-parity: parity-vectors
 pipelined-parity: parity-vectors
 	iverilog -g2012 -Wall -o $(PIPELINED_PARITY_SIM) rtl/lms_adaptive_filter_pipelined.v tb/tb_lms_pipelined_parity.v
 	vvp $(PIPELINED_PARITY_SIM)
+
+stream-parity: parity-vectors
+	iverilog -g2012 -Wall -o $(STREAM_PARITY_SIM) rtl/lms_adaptive_filter_pipelined.v rtl/lms_stream_wrapper.v tb/tb_lms_stream_wrapper.v
+	vvp $(STREAM_PARITY_SIM)
+
+stream-48k: parity-vectors
+	iverilog -g2012 -Wall -o $(STREAM_48K_SIM) rtl/lms_adaptive_filter_pipelined.v rtl/lms_stream_wrapper.v tb/tb_lms_stream_48k.v
+	vvp $(STREAM_48K_SIM)
 
 synthesis-report:
 	bash scripts/run_synthesis.sh
