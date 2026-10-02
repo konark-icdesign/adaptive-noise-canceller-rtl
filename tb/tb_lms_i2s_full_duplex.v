@@ -81,27 +81,28 @@ module tb_lms_i2s_full_duplex;
     always #10 sys_clk = ~sys_clk;
     always #325.520833 i2s_bclk = ~i2s_bclk;
 
+    task drive_before_negedge;
+        input next_ws;
+        input next_sd;
+        begin
+            @(posedge i2s_bclk);
+            #300;
+            i2s_ws = next_ws;
+            i2s_sd_in = next_sd;
+        end
+    endtask
+
     task send_stereo_frame;
         input [15:0] left_word;
         input [15:0] right_word;
         begin
-            for (bit_index=15; bit_index>=1; bit_index=bit_index-1) begin
-                @(negedge i2s_bclk);
-                i2s_ws = 1'b0;
-                i2s_sd_in = left_word[bit_index];
-            end
-            @(negedge i2s_bclk);
-            i2s_ws = 1'b1;
-            i2s_sd_in = left_word[0];
+            for (bit_index=15; bit_index>=1; bit_index=bit_index-1)
+                drive_before_negedge(1'b0, left_word[bit_index]);
+            drive_before_negedge(1'b1, left_word[0]);
 
-            for (bit_index=15; bit_index>=1; bit_index=bit_index-1) begin
-                @(negedge i2s_bclk);
-                i2s_ws = 1'b1;
-                i2s_sd_in = right_word[bit_index];
-            end
-            @(negedge i2s_bclk);
-            i2s_ws = 1'b0;
-            i2s_sd_in = right_word[0];
+            for (bit_index=15; bit_index>=1; bit_index=bit_index-1)
+                drive_before_negedge(1'b1, right_word[bit_index]);
+            drive_before_negedge(1'b0, right_word[0]);
         end
     endtask
 
@@ -133,9 +134,7 @@ module tb_lms_i2s_full_duplex;
         repeat (2) @(posedge i2s_bclk);
 
         // Initial synchronization boundary.
-        @(negedge i2s_bclk);
-        i2s_ws = 1'b0;
-        i2s_sd_in = 1'b0;
+        drive_before_negedge(1'b0, 1'b0);
 
         // Extra driven frames provide natural pipeline flush without stopping
         // the shared I2S clock. Only the first CHECK_N serialized LMS results

@@ -47,20 +47,23 @@ module tb_i2s_tx16_underrun;
 
     always #100 bclk = ~bclk;
 
+    task set_ws_before_negedge;
+        input next_ws;
+        begin
+            @(posedge bclk);
+            #80;
+            ws = next_ws;
+        end
+    endtask
+
     task clock_frame;
         begin
-            for (bit_index=15; bit_index>=1; bit_index=bit_index-1) begin
-                @(negedge bclk);
-                ws = 1'b0;
-            end
-            @(negedge bclk);
-            ws = 1'b1;
-            for (bit_index=15; bit_index>=1; bit_index=bit_index-1) begin
-                @(negedge bclk);
-                ws = 1'b1;
-            end
-            @(negedge bclk);
-            ws = 1'b0;
+            for (bit_index=15; bit_index>=1; bit_index=bit_index-1)
+                set_ws_before_negedge(1'b0);
+            set_ws_before_negedge(1'b1);
+            for (bit_index=15; bit_index>=1; bit_index=bit_index-1)
+                set_ws_before_negedge(1'b1);
+            set_ws_before_negedge(1'b0);
         end
     endtask
 
@@ -84,17 +87,16 @@ module tb_i2s_tx16_underrun;
         // Initial right->left synchronization boundary. Keep one frame pending
         // so it becomes the first active serialized pair.
         frame_valid = 1'b1;
-        @(negedge bclk);
-        ws = 1'b0;
+        set_ws_before_negedge(1'b0);
 
         wait (frame_ready);
         @(posedge bclk);
+        #1;
         frame_valid = 1'b0;
 
-        // Serialize the valid pair, then continue one more frame without
-        // supplying another pair. The second frame should be an explicit
-        // underrun after the transmitter has started.
-        clock_frame();
+        // Serializing this first valid frame ends on the next right->left
+        // boundary. Because no replacement pair is pending at that boundary,
+        // exactly one underrun is recorded for the frame that starts there.
         clock_frame();
         repeat (4) @(posedge bclk);
 
