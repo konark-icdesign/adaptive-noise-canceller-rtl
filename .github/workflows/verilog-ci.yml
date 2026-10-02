@@ -52,8 +52,17 @@ jobs:
       - name: Run I2S blocked-consumer overrun test
         run: make i2s-overrun
 
+      - name: Run I2S TX underrun test
+        run: make i2s-tx
+
+      - name: Run full-duplex I2S LMS parity
+        run: make i2s-full-duplex
+
       - name: Check I2S ingress synthesizability
         run: make i2s-synth-check
+
+      - name: Check full-duplex I2S synthesizability
+        run: make i2s-full-synth-check
 
       - name: Compare parallel and serialized synthesis
         run: make synthesis-report
