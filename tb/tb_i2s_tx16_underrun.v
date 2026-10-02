@@ -90,7 +90,6 @@ module tb_i2s_tx16_underrun;
         set_ws_before_negedge(1'b0);
 
         wait (frame_ready);
-        @(posedge bclk);
         #1;
         frame_valid = 1'b0;
 
