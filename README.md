@@ -148,6 +148,8 @@ make stream-parity
 make stream-48k
 make i2s-ingress
 make i2s-overrun
+make i2s-tx
+make i2s-full-duplex
 make serial-parity
 make synthesis-report
 make ecp5-implementation
@@ -198,6 +200,8 @@ A buffered [streaming wrapper](docs/streaming_wrapper.md) now adds source and si
 
 An [I2S ingress bridge](docs/i2s_ingress.md) now accepts classic 16-bit stereo framing, maps left=reference and right=desired, and crosses complete sample pairs from the 1.536 MHz BCLK domain into the 50 MHz LMS domain with a request/acknowledge bundled-data handshake. The nominal test decoded 256/256 frames and remained bit-exact with zero overrun or framing errors; a separate blocked-consumer test retained the first pending frame and counted the dropped second frame explicitly. [Verification record](results/i2s_ingress_verification.md).
 
+The [I2S output/full-duplex bridge](docs/i2s_output.md) returns LMS error/cleaned output on the left channel and noise estimate on the right, crossing results back from 50 MHz into the I2S BCLK domain. The end-to-end test decoded and checked 128 completed serialized LMS result pairs with zero mismatches, zero nominal TX underruns/timing errors and zero LMS overflow. A standalone test also verifies that a deliberately missing next result increments TX underrun exactly once. [Verification record](results/i2s_full_duplex_verification.md).
+
 Generated results:
 
 ```text
@@ -231,8 +235,10 @@ rtl/
   lms_adaptive_filter_pipelined.v
   lms_stream_wrapper.v
   i2s_stereo_rx16.v
+  i2s_stereo_tx16.v
   audio_pair_cdc.v
   lms_i2s_input_bridge.v
+  lms_i2s_full_duplex_bridge.v
   lms_adaptive_filter_serial.v
 
 tb/
@@ -243,6 +249,8 @@ tb/
   tb_lms_stream_48k.v
   tb_lms_i2s_input_bridge.v
   tb_i2s_rx16_overrun.v
+  tb_i2s_tx16_underrun.v
+  tb_lms_i2s_full_duplex.v
   tb_lms_serial_parity.v
 
 model/
