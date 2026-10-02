@@ -72,3 +72,49 @@ Generic Yosys synthesis is used only as a synthesizability check. The repository
 still does not contain a complete multi-clock ECP5 timing constraint set for the
 external BCLK and 50 MHz system domains, so no new device-specific full-duplex
 Fmax claim is made here.
+
+
+## Verified simulation result
+
+The corrected CI run passed the complete new output path.
+
+Standalone transmitter:
+
+- one pending stereo pair serialized exactly;
+- decoded left/right values matched the supplied pair;
+- the following missing result frame incremented `underrun_count` by exactly one;
+- zero transmitter timing errors;
+- zero monitor framing errors.
+
+Full-duplex path:
+
+- 136 input I2S frames were driven to provide startup/flush margin;
+- 135 sample pairs were accepted by the LMS stream;
+- 135 LMS results moved into the return path;
+- 135 TX pairs were loaded;
+- 134 valid TX frames had completed when the test stopped;
+- the first 128 completed TX frames were decoded and matched the fixed-point
+  reference exactly;
+- zero RX overrun/framing errors;
+- zero TX underruns/timing errors during continuous nominal streaming;
+- zero LMS input stalls and zero LMS output-overflow events.
+
+The count offsets are pipeline/startup effects in a continuously clocked framed
+interface; the parity assertion is made only on frames explicitly marked as
+completed valid LMS results.
+
+## Testbench failures retained
+
+The first TX CI attempt failed for two testbench reasons:
+
+1. WS was changed on the same falling BCLK edge the transmitter samples, creating
+   a simulator race. The test also clocked through two genuine missing-result
+   frame boundaries while expecting one underrun.
+2. After fixing edge setup, the test still skipped the first left-channel data
+   edge after initial synchronization. That created one extra same-channel bit
+   clock, correctly producing one TX timing error and one monitor framing error.
+
+The final stimulus gives WS setup time before falling BCLK, begins the left MSB
+immediately after synchronization, and stops after the single intended underrun
+boundary. No transmitter RTL arithmetic/framing change was needed for those two
+failures.

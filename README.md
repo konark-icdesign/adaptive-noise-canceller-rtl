@@ -200,7 +200,7 @@ A buffered [streaming wrapper](docs/streaming_wrapper.md) now adds source and si
 
 An [I2S ingress bridge](docs/i2s_ingress.md) now accepts classic 16-bit stereo framing, maps left=reference and right=desired, and crosses complete sample pairs from the 1.536 MHz BCLK domain into the 50 MHz LMS domain with a request/acknowledge bundled-data handshake. The nominal test decoded 256/256 frames and remained bit-exact with zero overrun or framing errors; a separate blocked-consumer test retained the first pending frame and counted the dropped second frame explicitly. [Verification record](results/i2s_ingress_verification.md).
 
-The [I2S output/full-duplex bridge](docs/i2s_output.md) returns LMS error/cleaned output on the left channel and noise estimate on the right, crossing results back from 50 MHz into the I2S BCLK domain. Its end-to-end test serializes the LMS result back through I2S and decodes it again for fixed-point parity; TX underruns are explicit rather than hidden.
+The [I2S output/full-duplex bridge](docs/i2s_output.md) returns LMS error/cleaned output on the left channel and noise estimate on the right, crossing results back from 50 MHz into the I2S BCLK domain. The end-to-end test decoded and checked 128 completed serialized LMS result pairs with zero mismatches, zero nominal TX underruns/timing errors and zero LMS overflow. A standalone test also verifies that a deliberately missing next result increments TX underrun exactly once. [Verification record](results/i2s_full_duplex_verification.md).
 
 Generated results:
 
