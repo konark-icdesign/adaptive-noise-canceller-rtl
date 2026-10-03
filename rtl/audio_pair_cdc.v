@@ -24,8 +24,12 @@ module audio_pair_cdc #(
     reg signed [WIDTH-1:0] source_left_hold;
     reg signed [WIDTH-1:0] source_right_hold;
 
-    reg ack_sync1, ack_sync2;
-    reg req_sync1, req_sync2;
+    // These are intentional two-flop synchronizer chains. The async_reg
+    // attributes document the CDC intent for synthesis/place-and-route tools.
+    (* async_reg = "true" *) reg ack_sync1;
+    (* async_reg = "true" *) reg ack_sync2;
+    (* async_reg = "true" *) reg req_sync1;
+    (* async_reg = "true" *) reg req_sync2;
 
     assign s_ready = (ack_sync2 == req_toggle);
 
