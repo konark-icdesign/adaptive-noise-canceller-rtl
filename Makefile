@@ -11,12 +11,15 @@ I2S_INGRESS_SIM := $(BUILD_DIR)/lms_i2s_input_tb
 I2S_OVERRUN_SIM := $(BUILD_DIR)/i2s_rx_overrun_tb
 I2S_TX_SIM := $(BUILD_DIR)/i2s_tx_underrun_tb
 I2S_FULL_SIM := $(BUILD_DIR)/lms_i2s_full_duplex_tb
+CDC_INGRESS_SIM := $(BUILD_DIR)/cdc_ingress_tb
+CDC_RETURN_SIM := $(BUILD_DIR)/cdc_return_tb
+CDC_AWKWARD_SIM := $(BUILD_DIR)/cdc_awkward_tb
 REF := $(BUILD_DIR)/lms_reference
 CC ?= gcc
 CFLAGS ?= -std=c11 -Wall -Wextra -O2
 PYTHON ?= python3
 
-.PHONY: all test sim wave reference experiment anc-experiment parity-vectors rtl-parity serial-parity pipelined-parity stream-parity stream-48k i2s-ingress i2s-overrun i2s-tx i2s-full-duplex i2s-synth-check i2s-full-synth-check synthesis-report ecp5-implementation clean
+.PHONY: all test sim wave reference experiment anc-experiment parity-vectors rtl-parity serial-parity pipelined-parity stream-parity stream-48k i2s-ingress i2s-overrun i2s-tx i2s-full-duplex cdc-stress i2s-synth-check i2s-full-synth-check synthesis-report ecp5-implementation clean
 
 all: test
 
@@ -77,6 +80,14 @@ i2s-tx:
 i2s-full-duplex: parity-vectors
 	iverilog -g2012 -Wall -o $(I2S_FULL_SIM) rtl/i2s_stereo_rx16.v rtl/i2s_stereo_tx16.v rtl/audio_pair_cdc.v rtl/lms_adaptive_filter_pipelined.v rtl/lms_stream_wrapper.v rtl/lms_i2s_input_bridge.v rtl/lms_i2s_full_duplex_bridge.v tb/tb_lms_i2s_full_duplex.v
 	vvp $(I2S_FULL_SIM)
+
+cdc-stress:
+	iverilog -g2012 -Wall -DS_HALF=325.520833 -DD_HALF=10.0 -DD_PHASE=7.25 -o $(CDC_INGRESS_SIM) rtl/audio_pair_cdc.v tb/tb_audio_pair_cdc_stress.v
+	vvp $(CDC_INGRESS_SIM)
+	iverilog -g2012 -Wall -DS_HALF=10.0 -DD_HALF=325.520833 -DD_PHASE=113.75 -o $(CDC_RETURN_SIM) rtl/audio_pair_cdc.v tb/tb_audio_pair_cdc_stress.v
+	vvp $(CDC_RETURN_SIM)
+	iverilog -g2012 -Wall -DS_HALF=37.0 -DD_HALF=53.0 -DD_PHASE=17.0 -o $(CDC_AWKWARD_SIM) rtl/audio_pair_cdc.v tb/tb_audio_pair_cdc_stress.v
+	vvp $(CDC_AWKWARD_SIM)
 
 i2s-synth-check:
 	yosys -q -p 'read_verilog -sv rtl/i2s_stereo_rx16.v rtl/audio_pair_cdc.v rtl/lms_adaptive_filter_pipelined.v rtl/lms_stream_wrapper.v rtl/lms_i2s_input_bridge.v; synth -top lms_i2s_input_bridge; check'

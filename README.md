@@ -150,6 +150,7 @@ make i2s-ingress
 make i2s-overrun
 make i2s-tx
 make i2s-full-duplex
+make cdc-stress
 make serial-parity
 make synthesis-report
 make ecp5-implementation
@@ -251,6 +252,7 @@ tb/
   tb_i2s_rx16_overrun.v
   tb_i2s_tx16_underrun.v
   tb_lms_i2s_full_duplex.v
+  tb_audio_pair_cdc_stress.v
   tb_lms_serial_parity.v
 
 model/

@@ -58,6 +58,9 @@ jobs:
       - name: Run full-duplex I2S LMS parity
         run: make i2s-full-duplex
 
+      - name: Stress bundled-data CDC in both directions
+        run: make cdc-stress
+
       - name: Check I2S ingress synthesizability
         run: make i2s-synth-check
 
