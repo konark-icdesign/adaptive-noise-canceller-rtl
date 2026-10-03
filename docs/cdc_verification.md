@@ -54,3 +54,34 @@ A future device-specific sign-off should use a constraint flow that represents
 the 50 MHz system clock and the external I2S BCLK separately and treats the
 synchronizer crossings as asynchronous. Until then, the repository keeps the
 multi-clock evidence at RTL/protocol level only.
+
+
+## Verified CI result
+
+All three deterministic stress runs transferred all 512 ordered pairs exactly.
+
+| direction / clock case | source half-period | destination half-period | phase | source stall cycles | destination stall cycles | result |
+|---|---:|---:|---:|---:|---:|---|
+| I2S-like -> 50 MHz | 325.520833 ns | 10 ns | 7.25 ns | 1022 | 466 | PASS |
+| 50 MHz -> I2S-like | 10 ns | 325.520833 ns | 113.75 ns | 80672 | 450 | PASS |
+| awkward unrelated clocks | 37 ns | 53 ns | 17 ns | 3974 | 488 | PASS |
+
+For every case:
+
+- 512/512 source pairs were accepted;
+- 512/512 destination pairs were consumed;
+- values arrived in exact sequence;
+- no pair was duplicated or lost;
+- destination data stayed stable whenever `d_valid && !d_ready`;
+- forced destination stalls were exercised;
+- the slower-destination cases produced substantial source backpressure;
+- no timeout/deadlock occurred.
+
+The very large source-stall count in the 50 MHz -> 1.536 MHz direction is
+expected for a one-entry handshake: the fast source spends most cycles waiting
+for the much slower destination and acknowledgement return. It is not a dropped
+sample count.
+
+These simulations validate the digital handshake protocol. They still do not
+model metastability resolution time, synchronizer MTBF, routed synchronizer
+placement or board-level clock quality.
